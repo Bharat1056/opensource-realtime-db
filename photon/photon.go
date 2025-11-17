@@ -73,27 +73,16 @@ func (p *Photon) Insert(collName string, data M) (uuid.UUID, error) {
 			return id, err
 		}
 
-		return id, nil
-
+		return id, tx.Commit()
 }
 
-func (p *Photon) Select(coll, k string, query any) {}
-
-
-	// user := make(map[string]string)
-
-	// if err := db.View(func(tx *bolt.Tx) error {
-	// 	bucket := tx.Bucket([]byte("users"))
-	// 	if bucket == nil {
-	// 		return fmt.Errorf("bucket (%s) not found", "users")
-	// 	}
-
-	// 	bucket.ForEach(func(k, v []byte) error {
-	// 		user[string(k)] = string(v)
-	// 		return nil
-	// 	})
-
-	// 	return nil
-	// }); err != nil {
-	// 	log.Fatal(err)
-	// }
+func (p *Photon) Select(coll, k string, query M) (M, error){
+	tx, err := p.db.Begin(false)
+	if err != nil {
+		return nil, err
+	}
+	bucket := tx.Bucket([]byte(coll))
+	if bucket == nil {
+		return nil, fmt.Errorf("Collection (%s) not found", coll)
+	}
+}
