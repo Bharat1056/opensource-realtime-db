@@ -3,6 +3,7 @@ package photon
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -10,8 +11,10 @@ const (
 	defaultDbName = "default"
 )
 
+type M map[string]string
+
 type Collection struct {
-	bucket *bolt.Bucket
+	*bolt.Bucket
 }
 
 type Photon struct {
@@ -30,20 +33,51 @@ func New() (*Photon, error) {
 }
 
 func (p *Photon) CreateCollection(name string) (*Collection, error) {
-	coll := Collection{}
-	err := p.db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucket([]byte("users"))
-		if err != nil {
-			return  err
-		}
-		coll.bucket = bucket
-		return nil
-	})
+	tx, err := p.db.Begin(true)
 	if err != nil {
 		return nil, err
 	}
-	return &coll, nil
+	defer tx.Rollback()
+
+	bucket, err := tx.CreateBucketIfNotExists([]byte(name))
+	if err != nil {
+		return  nil, err
+	}
+
+	return &Collection{
+		Bucket: bucket,
+	}, nil
 }
+
+func (p *Photon) Insert(collName string, data M) (uuid.UUID, error) {
+		id := uuid.New()
+
+		tx, err := p.db.Begin(true)
+		if err != nil {
+			return id, err
+		}
+		defer tx.Rollback()
+
+		bucket, err := tx.CreateBucketIfNotExists([]byte(collName))
+		if err != nil {
+			return  id, err
+		}
+
+		for k, v := range data {
+			if err := bucket.Put([]byte(k), []byte(v)); err != nil {
+				return id, err
+			}
+		}
+
+		if err := bucket.Put([]byte("id"), []byte(id.String())); err != nil {
+			return id, err
+		}
+
+		return id, nil
+
+}
+
+func (p *Photon) Select(coll, k string, query any) {}
 
 
 	// user := make(map[string]string)

@@ -9,10 +9,10 @@ import (
 
 func main() {
 
-	// user := map[string]string{
-	// 	"Name": "Bharat Panigrahi",
-	// 	"Age": "21",
-	// }
+	user := map[string]string{
+		"Name": "Bharat Panigrahi",
+		"Age": "21",
+	}
 
 
 	db, err := photon.New()
@@ -21,12 +21,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	coll, err := db.CreateCollection("users")
+	id, err := db.Insert("users", user)
+	// coll, err := db.CreateCollection("users")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%+v\n", coll)
+	fmt.Printf("%+v\n", id)
 
 }
